@@ -1,0 +1,4 @@
+# Python packages and dependencies
+
+beautifulsoup4
+requests
