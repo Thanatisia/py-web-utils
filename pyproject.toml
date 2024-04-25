@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name='yt-scripts'
-version='0.1.0'
+version='0.2.0'
 description="Collection of useful webscraper CLI utilities powered by BeautifulSoup, with this being based around video title searches and obtaining information via HTML Parsing"
 authors = [
     { name="Thanatisia", email="55834101+Thanatisia@users.noreply.github.com" },

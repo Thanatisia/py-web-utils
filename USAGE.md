@@ -114,6 +114,21 @@ USAGE
             yt-obtain-url < input-list.txt
             ```
 
+- Visualizing the JSON file
+    - Using jq to filter
+        - Obtain all 'content' keys in each row
+            ```bash
+            cat output.json | jq .[].content
+            ```
+        - Obtain all 'content' keys in each row and print in raw (No quoted strings)
+            ```bash
+            cat output.json | jq -r .[].content
+            ```
+        - Filter all 'content' keys in each row and print out the title, followed by the URL
+            ```bash
+            cat output.json | jq '.[].content | .title, .url'
+            ```
+
 ## Resources
 
 ## References
