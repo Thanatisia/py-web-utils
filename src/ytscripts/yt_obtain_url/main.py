@@ -5,8 +5,12 @@ import os
 import sys
 import requests
 import json
-from ytscripts.utils import remove_tags
+from random import random
+from time import sleep
 from bs4 import BeautifulSoup
+from asyncio import current_task, gather, run
+from multiprocessing import Pool, SimpleQueue
+from ytscripts.utils import remove_tags
 
 def get_cli_arguments():
     """
@@ -32,6 +36,156 @@ def process_cli_arguments(argv, argc):
 
     # Output
     return url
+
+def progress_bar(curr_index, number_of_urls, bar_opts={"end" : ","}):
+    """
+    Progress Bar
+    """
+    ## Calculate percentage increment
+    inc_perc = (curr_index / number_of_urls) * 100
+
+    ## Print Progress Bar
+    print("Current Progress: {}".format(inc_perc), **bar_opts)
+
+def async_process_url(url):
+    """
+    Process the given URL and export accordingly
+    """
+    global queue, api_res
+
+    # Initialize Variables
+    file_contents = ""
+    api_res_curr = {}
+
+    # Check if URL is provided
+    if url != "":
+        # Convert the task into a string
+        url = str(url)
+
+        # Check if current URL start with a '#'
+        if url.startswith('#'):
+            # Is a comment, append
+            ## Write a newline
+            file_contents = "\n{}\n".format(url)
+        else:
+            # Is not a comment, proceed
+            print("[i] Current Task: {}".format(url))
+
+            ## Initialize API result map for current entry
+            api_res_curr = {
+                "request" : {"stdout" : "", "stderr" : "", "status_code" : -1},
+                "content" : {"url" : url, "title"  : "", "status_code" : -1},
+            }
+
+            print("[*] Obtaining title of URL [{}]".format(url))
+
+            # Send a HTTP REST API GET request to the youtube URL and return the response stream
+            response = requests.get(url)
+
+            # Obtain API response parameters
+            response_status_code = response.status_code
+            response_text = response.text
+            api_res_curr["request"]["status_code"] = response_status_code
+
+            # Check if response status code is 200 (OK)
+            if response_status_code == 200:
+                ## Try to parse the HTML response string and find all the titles
+                try:
+                    # Initialize BeautifulSoup to crawl the response text HTML5 code
+                    soup = BeautifulSoup(response_text, features="html.parser")
+
+                    # Find all occurences of the title which is the link
+                    link = soup.find_all(name="title")[0]
+
+                    # Obtain the text returned (the title)
+                    title = link.text
+
+                    # Cleanup and Sanitize result output
+                    title = remove_tags(title, ["<title>", "</title>"]).strip()
+
+                    # Output
+                    print("[+] Title received: {}\n".format(title))
+
+                    ## Write to a list
+                    file_contents = "{} : {}\n".format(url, title)
+
+                    # Map the status code
+                    api_res_curr["content"]["status_code"] = 0
+                    # Map the standard output for the HTTP request
+                    api_res_curr["request"]["stdout"] = str(link)
+                    # Map the obtained title
+                    api_res_curr["content"]["title"] = str(title)
+                except Exception as ex:
+                    # Error encountered
+                    api_res_curr["request"]["stderr"] = str(ex)
+                    ## Write to a list
+                    file_contents = "{} : {}\n".format(url, "")
+                    print("[-] Error obtaining title: {}\n".format(ex))
+            else:
+                # Map the standard error for the HTTP request
+                api_res_curr["request"]["stderr"] = str(response_text)
+                file_contents = "{} : {}\n".format(url, "")
+                print("[-] Error sending HTTP GET request ({})\n".format(response_status_code))
+
+    # Perform validation
+
+    # Store the results into the SharedQueue memory object
+    queue.put((api_res_curr, file_contents))
+
+def async_execute_tasks(urls):
+    global file_contents, api_res
+
+    # Initialize variables
+    results = []
+
+    # Initialize/Create a shared queue for use
+    shared_queue = SimpleQueue()
+
+    # Create and configure the process pool
+    with Pool(initializer=init_worker, initargs=(shared_queue, )) as pool:
+        # Generate a Multiprocessing Pool and issue tasks to be executed concurrently/parallely
+        _ = pool.map_async(async_process_url, urls)
+
+        print("Sync completed")
+
+        # Iterate through the results and store into a list
+        for i in range(len(urls)):
+            # Get current element in queue
+            queue_row = list(shared_queue.get())
+            # print("Got {}\n".format(queue_row), flush=True)
+
+            # Store queue row contents into results
+            results.append(queue_row)
+
+        # Close the Shared Queue after usage
+        shared_queue.close()
+
+        # Close pool after usager
+        pool.close()
+
+    return results
+
+def export_titles(titles_list:list, export_filename="titles-list.txt", mode="a+"):
+    """
+    Export/Write the titles list into a file
+    """
+    # Open videos output list file for writing
+    with open(export_filename, mode) as export_file:
+        # Iterate through the titles and write to file
+        for i in range(len(titles_list)):
+            # Get current title
+            curr_title = titles_list[i]
+
+            # Strip the newlines if is the first line
+            if i == 0:
+                # Get current title
+                curr_title = curr_title.lstrip()
+
+            # Write to file
+            export_file.write(curr_title)
+
+        # Close file after usage
+        export_file.close()
 
 def export_operation_results(results:list, res_output_file="output.json"):
     """
@@ -76,11 +230,45 @@ def export_operation_results(results:list, res_output_file="output.json"):
         # Close file after usage
         export_json.close()
 
+def sanitize_task_results(results):
+    """
+    Go through all the elements ansd return the api results and the file contents
+    """
+    global api_res, file_contents
+
+    for row in results:
+        # Split current element into variables
+        curr_api_res = row[0]
+        curr_file_content = row[1]
+
+        # Sanitize and remove all empty values
+        if len(curr_api_res) != 0:
+            # Append the entry into the list
+            api_res.append(curr_api_res)
+
+        if len(curr_file_content) != 0:
+            # Append the entry into the list
+            file_contents.append(curr_file_content)
+
+    # Return
+    return [api_res, file_contents]
+
+def init_worker(shared_queue):
+    """
+    Initialize global variables and components for Multiprocessing
+    """
+    global queue, api_res
+    queue = shared_queue
+    api_res = [
+        # { "request" : {"stdout" : "", "stderr" : "", "status_code" : -1}, "content" : {"url" : url, "title" : "", "status_code" : -1} }
+    ]
+
 def init():
     """
     Initialize global variables and components
     """
-    global api_res
+    global file_contents, api_res
+    file_contents = []
     api_res = [
         # { "request" : {"stdout" : "", "stderr" : "", "status_code" : -1}, "content" : {"url" : url, "title" : "", "status_code" : -1} }
     ]
@@ -113,90 +301,21 @@ def main():
 
     print("URLs: {}".format(urls))
 
-    # Open videos output list file for writing
-    with open("videos-list.txt", "a+") as write_videos_list:
-        # Iterate through all URLs provided by the user
-        for i in range(len(urls)):
-            # Get current URL
-            url = urls[i]
+    try:
+        # Execute the tasks concurrently/parallely and return the results
+        results = list(async_execute_tasks(urls))
+        print("[i] Result: {}".format(results))
 
-            # Check if URL is provided
-            if url != "":
-                # Check if current URL start with a '#'
-                if url.startswith('#'):
-                    # Check if is not the first line
-                    if i != 0: 
-                        ## Write a newline
-                        write_videos_list.write("\n")
+        # Sanitize and filter the required parameters from the task results
+        api_res, file_contents = sanitize_task_results(results)
 
-                    # Is a comment, append
-                    write_videos_list.write(url)
-                    write_videos_list.write("\n")
-                else:
-                    # Is not a comment, proceed
-
-                    ## Initialize API result map for current entry
-                    api_res.append({
-                        "request" : {"stdout" : "", "stderr" : "", "status_code" : -1},
-                        "content" : {"url" : url, "title"  : "", "status_code" : -1},
-                    })
-                    curr_res_idx = len(api_res)-1
-
-                    print("[*] Obtaining title of URL [{}]".format(url))
-
-                    # Send a HTTP REST API GET request to the youtube URL and return the response stream
-                    response = requests.get(url)
-
-                    # Obtain API response parameters
-                    response_status_code = response.status_code
-                    response_text = response.text
-                    api_res[curr_res_idx]["request"]["status_code"] = response_status_code
-
-                    # Check if response status code is 200 (OK)
-                    if response_status_code == 200:
-                        ## Try to parse the HTML response string and find all the titles
-                        try:
-                            # Initialize BeautifulSoup to crawl the response text HTML5 code
-                            soup = BeautifulSoup(response_text, features="html.parser")
-
-                            # Find all occurences of the title which is the link
-                            link = soup.find_all(name="title")[0]
-
-                            # Obtain the text returned (the title)
-                            title = link.text
-
-                            # Cleanup and Sanitize result output
-                            title = remove_tags(title, ["<title>", "</title>"]).strip()
-
-                            # Output
-                            print("[+] Title received: {}\n".format(title))
-
-                            ## Write to a list
-                            write_videos_list.write("{} : {}".format(url, title))
-
-                            ## Write a newline
-                            write_videos_list.write("\n")
-
-                            # Map the status code
-                            api_res[curr_res_idx]["content"]["status_code"] = 0
-                            # Map the standard output for the HTTP request
-                            api_res[curr_res_idx]["request"]["stdout"] = str(link)
-                            # Map the obtained title
-                            api_res[curr_res_idx]["content"]["title"] = str(title)
-                        except Exception as ex:
-                            # Error encountered
-                            api_res[curr_res_idx]["stderr"] = str(ex)
-                            print("[-] Error obtaining title: {}\n".format(ex))
-                    else:
-                        # Map the standard error for the HTTP request
-                        api_res[curr_res_idx]["request"]["stderr"] = str(response_text)
-                        print("[-] Error sending HTTP GET request ({})\n".format(response_status_code))
-
-        ## Close file after usage
-        write_videos_list.close()
+        # Open a file and export all titles into the file
+        export_titles(file_contents)
 
         # Print JSON result
         export_operation_results(api_res)
+    except Exception as ex:
+        print("Exception: {}".format(ex))
 
 if __name__ == "__main__":
     main()
