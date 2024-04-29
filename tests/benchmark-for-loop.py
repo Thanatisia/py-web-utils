@@ -29,7 +29,7 @@ def benchmark_yt_obtain_url(cmd_list, stream_input):
                 proc.stdin.write(stream_input.encode("utf-8"))
 
                 # Flush the standard input pipe after writing
-                proc.stdin.flush()
+                proc.stdin.close()
 
             # Create a while loop to keep looping until there are no more output/not polling (aka a return code is produced (0 = Success, > 0 = Error))
             print("Polling...", flush=True)
