@@ -44,9 +44,98 @@ def progress_bar(curr_index, number_of_urls, bar_opts={"end" : ","}):
     ## Print Progress Bar
     print("Current Progress: {}".format(inc_perc), **bar_opts)
 
+def serial_process_url(urls):
+    """
+    Iterate through the URL list usign for loop and process each URL, exporting accordingly
+
+    :: Params
+    - urls : Specify a list of URLs to iterate through via for loop
+        + Type: List
+    """
+    # Iterate through all URLs provided by the user
+    for i in range(len(urls)):
+        # Get current URL
+        url = urls[i]
+
+        # Initialize Variables
+        file_content = ""
+
+        # Check if URL is provided
+        if url != "":
+            # Check if current URL start with a '#'
+            if url.startswith('#'):
+                # Check if is not the first line
+                if i != 0: 
+                    ## Write a newline
+                    file_content += "\n"
+
+                # Is a comment, append
+                file_content += "{}\n".format(url)
+            else:
+                # Is not a comment, proceed
+
+                ## Initialize API result map for current entry
+                api_res.append({
+                    "request" : {"stdout" : "", "stderr" : "", "status_code" : -1},
+                    "content" : {"url" : url, "title"  : "", "status_code" : -1},
+                })
+                curr_res_idx = len(api_res)-1
+
+                print("[*] Obtaining title of URL [{}]".format(url))
+
+                # Send a HTTP REST API GET request to the youtube URL and return the response stream
+                response = requests.get(url)
+
+                # Obtain API response parameters
+                response_status_code = response.status_code
+                response_text = response.text
+                api_res[curr_res_idx]["request"]["status_code"] = response_status_code
+
+                # Check if response status code is 200 (OK)
+                if response_status_code == 200:
+                    ## Try to parse the HTML response string and find all the titles
+                    try:
+                        # Initialize BeautifulSoup to crawl the response text HTML5 code
+                        soup = BeautifulSoup(response_text, features="html.parser")
+
+                        # Find all occurences of the title which is the link
+                        link = soup.find_all(name="title")[0]
+
+                        # Obtain the text returned (the title)
+                        title = link.text
+
+                        # Cleanup and Sanitize result output
+                        title = remove_tags(title, ["<title>", "</title>"]).strip()
+
+                        # Output
+                        print("[+] Title received: {}\n".format(title))
+
+                        ## Write to a list
+                        file_content += "{} : {}\n".format(url, title)
+
+                        # Map the status code
+                        api_res[curr_res_idx]["content"]["status_code"] = 0
+                        # Map the standard output for the HTTP request
+                        api_res[curr_res_idx]["request"]["stdout"] = str(link)
+                        # Map the obtained title
+                        api_res[curr_res_idx]["content"]["title"] = str(title)
+                    except Exception as ex:
+                        # Error encountered
+                        api_res[curr_res_idx]["request"]["stderr"] = str(ex)
+                        file_content += "{} : {}\n".format(url, "")
+                        print("[-] Error obtaining title: {}\n".format(ex))
+                else:
+                    # Map the standard error for the HTTP request
+                    api_res[curr_res_idx]["request"]["stderr"] = str(response_text)
+                    file_content += "{} : {}\n".format(url, "")
+                    print("[-] Error sending HTTP GET request ({})\n".format(response_status_code))
+
+        # Append current file content to list
+        file_contents.append(file_content)
+
 def multi_process_url(url):
     """
-    Process the given URL and export accordingly
+    Process the given URL and export accordingly using multiprocessing for concurrency/parallelism
     """
     global queue, api_res
 
@@ -301,7 +390,6 @@ def main():
     try:
         # Execute the tasks concurrently/parallely and return the results
         results = list(multi_execute_tasks(urls))
-        print("[i] Result: {}".format(results))
 
         # Sanitize and filter the required parameters from the task results
         api_res, file_contents = sanitize_task_results(results)
