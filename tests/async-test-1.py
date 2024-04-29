@@ -118,10 +118,13 @@ def async_process_url(url):
                 except Exception as ex:
                     # Error encountered
                     api_res_curr["request"]["stderr"] = str(ex)
+                    ## Write to a list
+                    file_contents = "{} : {}\n".format(url, "")
                     print("[-] Error obtaining title: {}\n".format(ex))
             else:
                 # Map the standard error for the HTTP request
                 api_res_curr["request"]["stderr"] = str(response_text)
+                file_contents = "{} : {}\n".format(url, "")
                 print("[-] Error sending HTTP GET request ({})\n".format(response_status_code))
 
     # Perform validation

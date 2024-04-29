@@ -5,10 +5,7 @@ import os
 import sys
 import requests
 import json
-from random import random
-from time import sleep
 from bs4 import BeautifulSoup
-from asyncio import current_task, gather, run
 from multiprocessing import Pool, SimpleQueue
 from ytscripts.utils import remove_tags
 
@@ -47,7 +44,7 @@ def progress_bar(curr_index, number_of_urls, bar_opts={"end" : ","}):
     ## Print Progress Bar
     print("Current Progress: {}".format(inc_perc), **bar_opts)
 
-def async_process_url(url):
+def multi_process_url(url):
     """
     Process the given URL and export accordingly
     """
@@ -132,7 +129,7 @@ def async_process_url(url):
     # Store the results into the SharedQueue memory object
     queue.put((api_res_curr, file_contents))
 
-def async_execute_tasks(urls):
+def multi_execute_tasks(urls):
     global file_contents, api_res
 
     # Initialize variables
@@ -144,7 +141,7 @@ def async_execute_tasks(urls):
     # Create and configure the process pool
     with Pool(initializer=init_worker, initargs=(shared_queue, )) as pool:
         # Generate a Multiprocessing Pool and issue tasks to be executed concurrently/parallely
-        _ = pool.map_async(async_process_url, urls)
+        _ = pool.map_async(multi_process_url, urls)
 
         print("Sync completed")
 
@@ -303,7 +300,7 @@ def main():
 
     try:
         # Execute the tasks concurrently/parallely and return the results
-        results = list(async_execute_tasks(urls))
+        results = list(multi_execute_tasks(urls))
         print("[i] Result: {}".format(results))
 
         # Sanitize and filter the required parameters from the task results
