@@ -5,8 +5,9 @@ import os
 import sys
 import requests
 import json
+import time
 from bs4 import BeautifulSoup
-from multiprocessing import Pool, SimpleQueue
+from multiprocessing import Pool, SimpleQueue, current_process
 from ytscripts.utils import remove_tags
 
 def get_cli_arguments():
@@ -80,6 +81,7 @@ def serial_process_url(urls):
 
                 ## Initialize API result map for current entry
                 api_res.append({
+                    "process" : {"id" : i},
                     "request" : {"stdout" : "", "stderr" : "", "status_code" : -1},
                     "content" : {"url" : url, "title"  : "", "status_code" : -1},
                 })
@@ -150,6 +152,9 @@ def multi_process_url(url):
     file_contents = ""
     api_res_curr = {}
 
+    # Get current process ID
+    curr_proc_id = os.getpid()
+
     # Check if URL is provided
     if url != "":
         # Convert the task into a string
@@ -166,6 +171,7 @@ def multi_process_url(url):
 
             ## Initialize API result map for current entry
             api_res_curr = {
+                "process" : {"id" : curr_proc_id},
                 "request" : {"stdout" : "", "stderr" : "", "status_code" : -1},
                 "content" : {"url" : url, "title"  : "", "status_code" : -1},
             }
@@ -220,10 +226,13 @@ def multi_process_url(url):
                 file_contents = "{} : {}\n".format(url, "")
                 print("[-] Error sending HTTP GET request ({})\n".format(response_status_code))
 
+    # Sleep for 1 second
+    time.sleep(1)
+
     # Perform validation
 
     # Store the results into the SharedQueue memory object
-    queue.put((api_res_curr, file_contents))
+    return [curr_proc_id, api_res_curr, file_contents]
 
 def multi_execute_tasks(urls):
     global file_contents, api_res
@@ -237,18 +246,13 @@ def multi_execute_tasks(urls):
     # Create and configure the process pool
     with Pool(initializer=init_worker, initargs=(shared_queue, )) as pool:
         # Generate a Multiprocessing Pool and issue tasks to be executed concurrently/parallely
-        _ = pool.map_async(multi_process_url, urls)
+        proc_ret = pool.map(multi_process_url, urls)
+        # _ = pool.map_async(multi_process_url, urls)
 
         print("Sync completed")
 
-        # Iterate through the results and store into a list
-        for i in range(len(urls)):
-            # Get current element in queue
-            queue_row = list(shared_queue.get())
-            # print("Got {}\n".format(queue_row), flush=True)
-
-            # Store queue row contents into results
-            results.append(queue_row)
+        # Return process data
+        results = proc_ret
 
         # Close the Shared Queue after usage
         shared_queue.close()
@@ -258,12 +262,12 @@ def multi_execute_tasks(urls):
 
     return results
 
-def export_titles(titles_list:list, export_filename="titles-list.txt", mode="a+"):
+def export_titles(titles_list:list, export_filename="titles-list.txt", mode="a+", encoding="utf-8"):
     """
     Export/Write the titles list into a file
     """
     # Open videos output list file for writing
-    with open(export_filename, mode) as export_file:
+    with open(export_filename, mode, encoding=encoding) as export_file:
         # Iterate through the titles and write to file
         for i in range(len(titles_list)):
             # Get current title
@@ -314,11 +318,12 @@ def export_operation_results(results:list, res_output_file="output.json"):
     res_output_file_extension = res_output_file_name.split(".")[1]
 
     # Open file IO stream for use
-    with open(res_output_file, "a+") as export_json:
+    with open(res_output_file, "a+", encoding="utf-8") as export_json:
         match res_output_file_extension:
             case "json":
                 ## Export the contents to the file pointer/descriptor stream
-                json.dump(results, export_json, indent=4, sort_keys=True)
+                # json.dump(results, export_json, indent=4, sort_keys=True)
+                json.dump(results, export_json, indent=4)
 
         # Close file after usage
         export_json.close()
@@ -331,20 +336,40 @@ def sanitize_task_results(results):
 
     for row in results:
         # Split current element into variables
-        curr_api_res = row[0]
-        curr_file_content = row[1]
+        ## Get current process elements
+        curr_proc_id = row[0]
+        curr_api_res = row[1]
+        curr_file_contents = row[2]
 
         # Sanitize and remove all empty values
         if len(curr_api_res) != 0:
             # Append the entry into the list
             api_res.append(curr_api_res)
 
-        if len(curr_file_content) != 0:
-            # Append the entry into the list
-            file_contents.append(curr_file_content)
+        if len(curr_file_contents) != 0:
+            # Map the entry to the process ID
+            file_contents.append(curr_file_contents)
 
     # Return
     return [api_res, file_contents]
+
+def sort_by_file(target_file, target_list:list):
+    """
+    Import a file into a list, sort a list by the contents of the file
+    """
+    # Initialize Variables
+    sort_key = []
+
+    # Open file for reading
+    with open(target_file, "r") as read_file:
+        # Import file
+        sort_key = read_file.readlines()
+
+        # Close file after usage
+        read_file.close()
+
+    # Sort the target list by the key
+    target_list.sort()
 
 def init_worker(shared_queue):
     """
@@ -406,6 +431,7 @@ def main():
 
                 # Sanitize and filter the required parameters from the task results
                 api_res, file_contents = sanitize_task_results(results)
+
             case "serial":
                 # Execute the tasks serially using for loop
                 api_res, file_contents = serial_process_url(urls)
@@ -413,11 +439,15 @@ def main():
                 # Default
                 print("Invalid processing type: {}".format(selected_processing_type))
 
-        # Open a file and export all titles into the file
-        export_titles(file_contents)
+        # Check if there are files to export
+        if len(file_contents) > 0:
+            # Open a file and export all titles into the file
+            export_titles(file_contents)
 
-        # Print JSON result
-        export_operation_results(api_res)
+            # Print JSON result
+            export_operation_results(api_res)
+        else:
+            print("No titles to be exported.")
     except Exception as ex:
         print("Exception: {}".format(ex))
 

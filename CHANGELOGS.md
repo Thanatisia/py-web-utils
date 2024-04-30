@@ -161,3 +161,21 @@
         + Verbosity
         + Printing/exporting of JSON file (or Disable)
 
+#### 2119H
+- Updates
+    - Updated main entry point 'main.py' for 'yt-obtain-url' in 'src/ytscripts/yt_obtain_url/'
+        - Bug Fixes
+            + Fixed an encoding issue
+            - Fixed an issue where due to the nature of concurrency, parallelism and multiprocessing, there will be desynchronization in the input data stream and the output data stream
+                + Used the task's system process ID as an anchor point
+        - Dependencies change
+            + Added library 'time'
+        - Feature Change
+            + Added obtaining of process ID for multiprocess tasks (Serial processing via for loop will use the index of the loop instead)
+            + Replaced the usage of Shared Queues to store results of a task from multiprocessing with just returning a list containing `[current-process-id, api-results, file-contents]`
+            + Replaced async (map.async) pool execution with sync (map)
+            + Added encoding to 'export_titles()' to solve an encoding issue when used with Windows
+            + Removed 'sort_keys=True' from json.dump so that the json dumper does not automatically sort on export
+            + Added function 'sort_by_file()' (UNUSED)
+            + Added output title length validation
+
