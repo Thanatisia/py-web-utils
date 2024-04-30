@@ -7,7 +7,7 @@ YouTube Webscraper CLI utilities and implementations
     + With this being based around Video searches and obtaining information via HTML Parsing
 
 ### Package
-+ Version: v0.2.0
++ Version: v0.3.0
 
 ### Scripts
 + yt-obtain-url : Simple YouTube URL title finder CLI utility

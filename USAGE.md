@@ -30,13 +30,47 @@ USAGE
 
 *Usage*
 -------
-- Obtain the title of a specified YouTube URL link
+- Obtain the title of a specified URL link
     - Notes
-        - Parse a youtube video URL string into the CLI utility argument and
+        - Parse a URL string into the CLI utility argument and
             + the application will output the youtube URL mapped to the title in a text file
     ```bash
     yt-obtain-url [youtube-url-link]
     ```
+
+- Streaming a file of links into the application's standard input stream
+    - Prepare a file (currently statically set as 'in-links.txt'
+        - Notes
+            + Prepend/Start the string with a '#' delimiter to comment out the url, this will be treated as a comment string
+        ```
+        # header/comment
+        url-1-here
+        url-2-here
+        url-3-here
+        url-4-here
+        url-5-here
+        ```
+    - Stream the file into the application as standard input
+        ```bash
+        yt-obtain-url < filename.txt
+        ```
+
+- Pipe the contents of a file of links into the application
+    - Prepare a file (currently statically set as 'in-links.txt'
+        - Notes
+            + Prepend/Start the string with a '#' delimiter to comment out the url, this will be treated as a comment string
+        ```
+        # header/comment
+        url-1-here
+        url-2-here
+        url-3-here
+        url-4-here
+        url-5-here
+        ```
+    - Pipe the contents of the file into the application
+        ```bash
+        cat filename.txt | yt-obtain-url
+        ```
 
 ## Importing/Embedding as a library/module
 
@@ -108,10 +142,14 @@ USAGE
             url-3
             url-N
             ```
-        - Pipe/Stream the input list as an input stream into yt-obtain-url
+        - Stream the input list as an input stream into yt-obtain-url
             + and output the URL mapped to the title in an output file
             ```bash
             yt-obtain-url < input-list.txt
+            ```
+        - Pipe the contents of the input list into yt-obtain-url
+            ```bash
+            cat input-list.txt | yt-obtain-url
             ```
 
 - Visualizing the JSON file
