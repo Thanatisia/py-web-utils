@@ -4,7 +4,7 @@ List of standalone applications
 ## CLI Applications
 - yt-obtain-url
     - Information
-        + Version: v0.3.0
+        + Version: v0.4.0
     - Script
         - Dependencies
             - Python packages
