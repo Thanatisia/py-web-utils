@@ -52,6 +52,10 @@ def serial_process_url(urls):
     - urls : Specify a list of URLs to iterate through via for loop
         + Type: List
     """
+    # Initialize Variables
+    file_contents:list = []
+    api_res:list = []
+
     # Iterate through all URLs provided by the user
     for i in range(len(urls)):
         # Get current URL
@@ -132,6 +136,9 @@ def serial_process_url(urls):
 
         # Append current file content to list
         file_contents.append(file_content)
+
+    # Return/Output
+    return [api_res, file_contents]
 
 def multi_process_url(url):
     """
@@ -360,6 +367,7 @@ def init():
     ]
 
 def main():
+    global api_res, file_contents
     # Initialize Variables
     yt_url = ""
     urls = []
@@ -388,11 +396,22 @@ def main():
     print("URLs: {}".format(urls))
 
     try:
-        # Execute the tasks concurrently/parallely and return the results
-        results = list(multi_execute_tasks(urls))
+        # Begin processing of URLs
+        processing_types = ["serial", "multiprocessing"]
+        selected_processing_type = processing_types[1]
+        match selected_processing_type:
+            case "multiprocessing":
+                # Execute the tasks concurrently/parallely and return the results
+                results = list(multi_execute_tasks(urls))
 
-        # Sanitize and filter the required parameters from the task results
-        api_res, file_contents = sanitize_task_results(results)
+                # Sanitize and filter the required parameters from the task results
+                api_res, file_contents = sanitize_task_results(results)
+            case "serial":
+                # Execute the tasks serially using for loop
+                api_res, file_contents = serial_process_url(urls)
+            case _:
+                # Default
+                print("Invalid processing type: {}".format(selected_processing_type))
 
         # Open a file and export all titles into the file
         export_titles(file_contents)
