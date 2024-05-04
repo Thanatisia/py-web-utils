@@ -4,6 +4,7 @@
 + [2024-04-06](#2024-04-06)
 + [2024-04-25](#2024-04-25)
 + [2024-04-30](#2024-04-30)
++ [2024-05-05](#2024-05-05)
 
 ## Logs
 ### 2024-04-06
@@ -227,4 +228,21 @@
     - Add optional arguments for
         + Verbosity
         + Printing/exporting of JSON file (or Disable)
+
+### 2024-05-05
+#### 0748H
+- Renaming the project from 'py-webscraper-yt' to 'py-web-utils'
+    - The intent is to generalize the project into a Web/URL-holding utility package (i.e. via webscraping) 
+        + since it has went from being a specifically-youtube webscraper 
+        + into a holding general network-focused collection
+
+- New
+    + Created new directory 'app' in 'src/ytscripts' to store all project application layer source codes
+    + Created new directory 'core' in 'src/ytscripts' to store all project core utilities
+
+- Updates
+    + Moved module 'utils.py' from 'src/ytscripts' => 'src/ytscripts/core'
+    + Moved project application source directory 'yt-obtain-url' from 'src/ytscripts' => 'src/ytscripts/app/'
+    + Renamed project application 'yt-obtain-url' => 'urltitlextr' (URL title eXtractor)
+
 
