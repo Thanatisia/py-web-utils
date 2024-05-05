@@ -2,9 +2,10 @@ List of standalone applications
 ===============================
 
 ## CLI Applications
-- yt-obtain-url
+- urltitlextr
     - Information
         + Version: v0.4.0
+        + Description: Previously named 'yt-obtain-url'
     - Script
         - Dependencies
             - Python packages
