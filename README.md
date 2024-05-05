@@ -7,7 +7,7 @@ Network/Web Application Webscraper CLI libraries, utilities and implementations
     + With this being based around Video searches and obtaining information via HTML Parsing
 
 ### Package
-+ Version: v0.4.0
++ Version: v0.5.0
 
 ### Scripts
 + urltitlextr : Previously named yt-obtain-url, This is a Simple URL title extractor CLI utility that does 1 thing - extracts title from a given (or set of) URLs and returns it in a new file

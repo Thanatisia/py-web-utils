@@ -257,3 +257,35 @@
     - Updated document 'scripts.md' in 'docs/'
         + Replaced 'yt-obtain-url' => 'urltitlextr'
 
+#### 0932H
++ Version: v0.5.0
+
+- Version Changes
+    - Renaming the project from 'py-webscraper-yt' to 'py-web-utils'
+        - The intent is to generalize the project into a Web/URL-holding utility package (i.e. via webscraping) 
+            + since it has went from being a specifically-youtube webscraper 
+            + into a holding general network-focused collection
+    + Moved module 'utils.py' from 'src/ytscripts' => 'src/ytscripts/core'
+    + Moved project application source directory 'yt-obtain-url' from 'src/ytscripts' => 'src/ytscripts/app/'
+    + Renamed package 'ytscripts' => 'webscripts'
+    + Renamed project application 'yt-obtain-url' => 'urltitlextr' (URL title eXtractor)
+
+- New
+    + Created new directory 'app' in 'src/ytscripts' to store all project application layer source codes
+    + Created new directory 'core' in 'src/ytscripts' to store all project core utilities
+
+- Updates
+    + Moved module 'utils.py' from 'src/ytscripts' => 'src/ytscripts/core'
+    + Moved project application source directory 'yt-obtain-url' from 'src/ytscripts' => 'src/ytscripts/app/'
+    + Renamed project application 'yt-obtain-url' => 'urltitlextr' (URL title eXtractor)
+    + Renamed package 'ytscripts' => 'webscripts'
+    - Updated document 'README.md'
+        + Edited occurences of 'yt-obtain-url' => 'urltitlextr'
+        + Updated setup documentations
+        + Updated version to 'v0.5.0
+    - Updated python packaging configuration file 'pyproject.toml'
+        + Replaced package and script entry points
+        + Updated version to '0.5.0
+    - Updated document 'scripts.md' in 'docs/'
+        + Replaced 'yt-obtain-url' => 'urltitlextr'
+
