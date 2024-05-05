@@ -1,5 +1,5 @@
-YouTube Webscraper CLI utilities and implementations
-====================================================
+Network/Web Application Webscraper CLI libraries, utilities and implementations
+===============================================================================
 
 ## Information
 ### Description
@@ -10,7 +10,7 @@ YouTube Webscraper CLI utilities and implementations
 + Version: v0.4.0
 
 ### Scripts
-+ yt-obtain-url : Simple YouTube URL title finder CLI utility
++ urltitlextr : Previously named yt-obtain-url, This is a Simple URL title extractor CLI utility that does 1 thing - extracts title from a given (or set of) URLs and returns it in a new file
 
 ### DISCLAIMER
 + This is for educational and for trial and error and testing purposes only
@@ -48,13 +48,13 @@ YouTube Webscraper CLI utilities and implementations
 ### Installation
 - Install using pip
     ```bash
-    pip install git+https://github.com/Thanatisia/py-webscraping-yt
+    pip install git+https://github.com/Thanatisia/py-web-utils
     ```
 
 - Install from requirements.txt
     - Include the project repository url mapped to the package name in 'requirements.txt'
         ```
-        yt-scripts @ git+https://github.com/Thanatisia/py-webscraping-yt
+        web-utils @ git+https://github.com/Thanatisia/py-web-utils
         ```
     - Install python package dependencies
         ```bash
@@ -64,7 +64,7 @@ YouTube Webscraper CLI utilities and implementations
 - Install locally in development mode
     - Clone repository
         ```bash
-        git clone https://github.com/Thanatisia/py-webscraping
+        git clone https://github.com/Thanatisia/py-web-utils
         ```
     - Change directory into repository
         ```bash
@@ -76,7 +76,7 @@ YouTube Webscraper CLI utilities and implementations
         ```
     - (Optional) Uninstall package
         ```bash
-        pip uninstall yt-scripts
+        pip uninstall web-utils
         ```
     - Install locally in development mode
         ```bash

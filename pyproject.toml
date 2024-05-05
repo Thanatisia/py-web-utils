@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name='yt-scripts'
+name='web-utils'
 version='0.4.0'
-description="Collection of useful webscraper CLI utilities powered by BeautifulSoup, with this being based around video title searches and obtaining information via HTML Parsing"
+description="Collection of useful network/web-applications webscraper CLI utilities powered by BeautifulSoup, with this being based around video title searches and obtaining information via HTML Parsing"
 authors = [
     { name="Thanatisia", email="55834101+Thanatisia@users.noreply.github.com" },
 ]
@@ -44,7 +44,7 @@ dependencies = [
 
 [project.scripts]
 # Program Entry Point(s) and scripts
-yt-obtain-url = "ytscripts.yt_obtain_url.main:main"
+urltitlextr = "webscripts.app.urltitlextr.main:main"
 
 [project.urls]
 Homepage = "https://github.com/Thanatisia/py-webscraper-yt"

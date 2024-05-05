@@ -246,3 +246,14 @@
     + Renamed project application 'yt-obtain-url' => 'urltitlextr' (URL title eXtractor)
 
 
+#### 0931H
+- Updates
+    + Renamed package 'ytscripts' => 'webscripts'
+    - Updated document 'README.md'
+        + Edited occurences of 'yt-obtain-url' => 'urltitlextr'
+        + Updated setup documentations
+    - Updated python packaging configuration file 'pyproject.toml'
+        + Replaced package and script entry points
+    - Updated document 'scripts.md' in 'docs/'
+        + Replaced 'yt-obtain-url' => 'urltitlextr'
+
