@@ -8,7 +8,7 @@ import json
 import time
 from bs4 import BeautifulSoup
 from multiprocessing import Pool, SimpleQueue, current_process
-from ytscripts.utils import remove_tags
+from webscripts.core.utils import remove_tags
 
 def get_cli_arguments():
     """
